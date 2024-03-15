@@ -1,17 +1,24 @@
 package main
 
 import (
+	"database/sql"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"time"
 
+	"github.com/BaneleJerry/Blog-Aggregator/internal/database"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 func greet(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World! %s", time.Now())
+}
+
+type apiConfig struct{
+	DB *database.Queries
 }
 
 func main() {
@@ -22,15 +29,33 @@ func main() {
 	}
 
 	port := os.Getenv("PORT")
-	if port == "" {
+	dbURL := os.Getenv("DB_URL")
+	if port == "" || dbURL == "" {
 		panic("Could not get ENV")
 	}
+	db,err := sql.Open("postgres",dbURL)
+
+	if err != nil {
+		log.Fatalf("Error opening database connection: %v", err)
+	}
+	defer db.Close()
+
+	dbQuries := database.New(db)
+
+	cfg := apiConfig{
+		DB: dbQuries,
+	}
+
 
 	filepathRoot := "/"
 
 	mux := http.NewServeMux()
 
 	mux.HandleFunc(filepathRoot, greet)
+	mux.HandleFunc("GET /v1/readiness", readinessHandler)
+	mux.HandleFunc("GET /v1/err", errorHandler)
+	mux.HandleFunc("POST /v1/users", cfg.createUserHandler)
+
 	corsMux := middlewareCors(mux)
 
 	srv := &http.Server{
