@@ -10,7 +10,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func (cfg *apiConfig) handlerCreateFeedFollower(w http.ResponseWriter, r *http.Request, user database.User) {
+func (cfg *apiConfig) handlerCreateFeedFollow(w http.ResponseWriter, r *http.Request, user database.User) {
 	var param struct {
 		Feed_id uuid.UUID `json:"feed_id"`
 	}
@@ -31,6 +31,7 @@ func (cfg *apiConfig) handlerCreateFeedFollower(w http.ResponseWriter, r *http.R
 		respondWithError(w, http.StatusInternalServerError, "Could not create feed_follow")
 		return
 	}
+
 
 	respondWithJSON(w, http.StatusOK, databaseFeedFollowToFeedFollow(feed_follow))
 }
