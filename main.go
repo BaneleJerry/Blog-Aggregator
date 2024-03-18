@@ -17,7 +17,7 @@ func greet(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Hello World! %s", time.Now())
 }
 
-type apiConfig struct{
+type apiConfig struct {
 	DB *database.Queries
 }
 
@@ -33,7 +33,7 @@ func main() {
 	if port == "" || dbURL == "" {
 		panic("Could not get ENV")
 	}
-	db,err := sql.Open("postgres",dbURL)
+	db, err := sql.Open("postgres", dbURL)
 
 	if err != nil {
 		log.Fatalf("Error opening database connection: %v", err)
@@ -46,7 +46,6 @@ func main() {
 		DB: dbQuries,
 	}
 
-
 	filepathRoot := "/"
 
 	mux := http.NewServeMux()
@@ -55,6 +54,9 @@ func main() {
 	mux.HandleFunc("GET /v1/readiness", readinessHandler)
 	mux.HandleFunc("GET /v1/err", errorHandler)
 	mux.HandleFunc("POST /v1/users", cfg.createUserHandler)
+	mux.HandleFunc("GET /v1/users", cfg.middlewareAuth(cfg.getUserHandler))
+	mux.HandleFunc("POST /v1/feeds", cfg.middlewareAuth(cfg.createFeedHandler))
+	mux.HandleFunc("GET /v1/feeds", cfg.getFeedsHandler)
 
 	corsMux := middlewareCors(mux)
 
